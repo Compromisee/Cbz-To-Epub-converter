@@ -1,0 +1,2305 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBZ to EPUB Converter</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Google Material Symbols -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+
+<style>
+/* ══════════════════════════════════════════
+   RESET & BASE
+   ══════════════════════════════════════════ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --radius: 0px;
+  --grid-size: 20px;
+  --grid-dot: 1px;
+  --transition: 150ms ease;
+  --border-width: 1px;
+}
+
+/* ══════════════════════════════════════════
+   THEMES
+   ══════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-tertiary: #181818;
+  --bg-elevated: #1a1a1a;
+  --border-color: #2a2a2a;
+  --border-hover: #3a3a3a;
+  --text-primary: #d4d4d4;
+  --text-secondary: #888888;
+  --text-muted: #555555;
+  --accent-1: #a8b4e8;   /* pastel blue */
+  --accent-2: #b8e0c8;   /* pastel green */
+  --accent-3: #e8c4a8;   /* pastel orange */
+  --accent-4: #d4a8e0;   /* pastel purple */
+  --accent-5: #e0a8a8;   /* pastel red */
+  --accent-6: #a8d8e0;   /* pastel cyan */
+  --success: #b8e0c8;
+  --error: #e0a8a8;
+  --warning: #e8d4a8;
+  --grid-dot-color: #1a1a1a;
+  --scrollbar-track: #111111;
+  --scrollbar-thumb: #2a2a2a;
+  --input-bg: #0e0e0e;
+  --overlay: rgba(0,0,0,0.6);
+}
+
+[data-theme="light"] {
+  --bg-primary: #fafafa;
+  --bg-secondary: #f0f0f0;
+  --bg-tertiary: #e8e8e8;
+  --bg-elevated: #ffffff;
+  --border-color: #d0d0d0;
+  --border-hover: #b0b0b0;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --accent-1: #6b7ec2;
+  --accent-2: #5a9e72;
+  --accent-3: #c08050;
+  --accent-4: #9060a8;
+  --accent-5: #c06060;
+  --accent-6: #5098a8;
+  --success: #5a9e72;
+  --error: #c06060;
+  --warning: #c0a050;
+  --grid-dot-color: #e0e0e0;
+  --scrollbar-track: #f0f0f0;
+  --scrollbar-thumb: #c0c0c0;
+  --input-bg: #ffffff;
+  --overlay: rgba(0,0,0,0.3);
+}
+
+/* ══════════════════════════════════════════
+   SCROLLBAR
+   ══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 0; }
+
+/* ══════════════════════════════════════════
+   DOT MATRIX BACKGROUND
+   ══════════════════════════════════════════ */
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  background-image: radial-gradient(circle, var(--grid-dot-color) var(--grid-dot), transparent var(--grid-dot));
+  background-size: var(--grid-size) var(--grid-size);
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════
+   LAYOUT
+   ══════════════════════════════════════════ */
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ══════════════════════════════════════════
+   HEADER
+   ══════════════════════════════════════════ */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: var(--border-width) solid var(--border-color);
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  color: var(--accent-1);
+  font-size: 28px;
+}
+
+.header h1 {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.header h1 span {
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  border-radius: var(--radius);
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-1);
+  color: var(--accent-1);
+}
+
+/* ══════════════════════════════════════════
+   TABS
+   ══════════════════════════════════════════ */
+.tabs {
+  display: flex;
+  border-bottom: var(--border-width) solid var(--border-color);
+  margin-bottom: 20px;
+  gap: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+}
+
+.tab.active {
+  color: var(--accent-1);
+  border-bottom-color: var(--accent-1);
+}
+
+.tab .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* ══════════════════════════════════════════
+   SECTION
+   ══════════════════════════════════════════ */
+.section {
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-elevated);
+  margin-bottom: 16px;
+  border-radius: var(--radius);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: var(--border-width) solid var(--border-color);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.section-header .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--accent-1);
+}
+
+.section-header .accent-2 { color: var(--accent-2); }
+.section-header .accent-3 { color: var(--accent-3); }
+.section-header .accent-4 { color: var(--accent-4); }
+.section-header .accent-5 { color: var(--accent-5); }
+.section-header .accent-6 { color: var(--accent-6); }
+
+.section-body {
+  padding: 14px;
+}
+
+/* ══════════════════════════════════════════
+   BUTTONS
+   ══════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: var(--border-width) solid var(--border-color);
+  cursor: pointer;
+  transition: var(--transition);
+  border-radius: var(--radius);
+  white-space: nowrap;
+}
+
+.btn:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-tertiary);
+}
+
+.btn .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: var(--accent-1);
+  color: #0a0a0a;
+  border-color: var(--accent-1);
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+  background: var(--accent-1);
+  border-color: var(--accent-1);
+}
+
+.btn-danger {
+  color: var(--accent-5);
+  border-color: var(--accent-5);
+  background: transparent;
+}
+
+.btn-danger:hover {
+  background: var(--accent-5);
+  color: #0a0a0a;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.btn-sm .material-symbols-outlined {
+  font-size: 13px;
+}
+
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.btn-convert {
+  width: 100%;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  justify-content: center;
+  letter-spacing: 1px;
+}
+
+/* ══════════════════════════════════════════
+   FORM ELEMENTS
+   ══════════════════════════════════════════ */
+.form-grid {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.form-grid label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: var(--border-width) solid var(--border-color);
+  padding: 6px 10px;
+  outline: none;
+  transition: var(--transition);
+  border-radius: var(--radius);
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent-1);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border-color);
+  outline: none;
+  border-radius: 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent-1);
+  border: none;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--accent-1);
+  border: none;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.form-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  grid-column: 2;
+  margin-top: -4px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-row-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ══════════════════════════════════════════
+   CHECKBOX & RADIO
+   ══════════════════════════════════════════ */
+.check-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 4px 0;
+}
+
+.check-item input[type="checkbox"],
+.check-item input[type="radio"] {
+  display: none;
+}
+
+.check-box {
+  width: 14px;
+  height: 14px;
+  border: var(--border-width) solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+  border-radius: var(--radius);
+}
+
+.check-box .material-symbols-outlined {
+  font-size: 12px;
+  opacity: 0;
+  color: #0a0a0a;
+  transition: var(--transition);
+}
+
+.check-item input:checked + .check-box {
+  background: var(--accent-1);
+  border-color: var(--accent-1);
+}
+
+.check-item input:checked + .check-box .material-symbols-outlined {
+  opacity: 1;
+}
+
+.radio-box {
+  width: 14px;
+  height: 14px;
+  border: var(--border-width) solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  border-radius: 50%;
+}
+
+.radio-dot {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+  transition: var(--transition);
+  border-radius: 50%;
+}
+
+.check-item input:checked + .radio-box {
+  border-color: var(--accent-1);
+}
+
+.check-item input:checked + .radio-box .radio-dot {
+  background: var(--accent-1);
+}
+
+/* ══════════════════════════════════════════
+   FILE LIST
+   ══════════════════════════════════════════ */
+.file-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.file-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-2);
+}
+
+.file-list {
+  border: var(--border-width) solid var(--border-color);
+  background: var(--input-bg);
+  min-height: 180px;
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: var(--radius);
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-bottom: var(--border-width) solid var(--border-color);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.file-item.selected {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.file-item.success {
+  color: var(--success);
+}
+
+.file-item.error {
+  color: var(--error);
+}
+
+.file-item .material-symbols-outlined {
+  font-size: 14px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.file-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-item-path {
+  color: var(--text-muted);
+  font-size: 10px;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  gap: 8px;
+}
+
+.file-list-empty .material-symbols-outlined {
+  font-size: 32px;
+}
+
+/* ══════════════════════════════════════════
+   COVER PREVIEW
+   ══════════════════════════════════════════ */
+.cover-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cover-preview {
+  width: 100px;
+  height: 140px;
+  border: var(--border-width) solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.cover-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.cover-preview .material-symbols-outlined {
+  font-size: 32px;
+  color: var(--text-muted);
+}
+
+.cover-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cover-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ══════════════════════════════════════════
+   COLOR PICKER
+   ══════════════════════════════════════════ */
+.color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  border: var(--border-width) solid var(--border-color);
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: var(--radius);
+}
+
+input[type="color"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* ══════════════════════════════════════════
+   RANGE WITH VALUE
+   ══════════════════════════════════════════ */
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-1);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ══════════════════════════════════════════
+   PROGRESS
+   ══════════════════════════════════════════ */
+.progress-area {
+  margin-top: 20px;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 4px;
+  background: var(--border-color);
+  margin-bottom: 8px;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent-1);
+  transition: width 200ms ease;
+}
+
+.progress-bar-fill.success {
+  background: var(--success);
+}
+
+.progress-bar-fill.error {
+  background: var(--error);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════════════════
+   LOG
+   ══════════════════════════════════════════ */
+.log {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--input-bg);
+  border: var(--border-width) solid var(--border-color);
+  padding: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+  margin-top: 10px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border-radius: var(--radius);
+}
+
+.log-entry {
+  padding: 1px 0;
+}
+
+.log-entry.error { color: var(--error); }
+.log-entry.success { color: var(--success); }
+.log-entry.info { color: var(--accent-6); }
+
+/* ══════════════════════════════════════════
+   STATUS BAR
+   ══════════════════════════════════════════ */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: var(--border-width) solid var(--border-color);
+  margin-top: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.status-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--text-muted);
+  border-radius: 50%;
+}
+
+.status-dot.ready { background: var(--accent-2); }
+.status-dot.working { background: var(--accent-3); animation: pulse 1s infinite; }
+.status-dot.done { background: var(--success); }
+.status-dot.error { background: var(--error); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ══════════════════════════════════════════
+   COMPAT INFO
+   ══════════════════════════════════════════ */
+.compat-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 20px;
+}
+
+.compat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.compat-item .material-symbols-outlined {
+  font-size: 14px;
+  color: var(--accent-2);
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .app { padding: 12px; }
+  .header h1 { font-size: 13px; }
+  .form-grid { grid-template-columns: 1fr; gap: 4px; }
+  .form-grid label { text-align: left; }
+  .tabs { overflow-x: auto; }
+  .compat-list { grid-template-columns: 1fr; }
+  .cover-area { flex-direction: column; }
+  .file-item-path { display: none; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- ═══════ HEADER ═══════ -->
+  <header class="header">
+    <div class="header-left">
+      <span class="material-symbols-outlined header-icon">auto_stories</span>
+      <h1>cbz2epub <span>// converter</span></h1>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════ TABS ═══════ -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="files">
+      <span class="material-symbols-outlined">folder_open</span> files
+    </button>
+    <button class="tab" data-tab="metadata">
+      <span class="material-symbols-outlined">edit_note</span> metadata
+    </button>
+    <button class="tab" data-tab="image">
+      <span class="material-symbols-outlined">tune</span> image
+    </button>
+    <button class="tab" data-tab="output">
+      <span class="material-symbols-outlined">output</span> output
+    </button>
+  </nav>
+
+  <!-- ═══════ FILES TAB ═══════ -->
+  <div class="tab-panel active" id="tab-files">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined">description</span>
+        input files
+      </div>
+      <div class="section-body">
+        <div class="file-list-toolbar">
+          <div class="btn-group">
+            <button class="btn" onclick="addFiles()">
+              <span class="material-symbols-outlined">add</span> add files
+            </button>
+            <button class="btn" onclick="addFolder()">
+              <span class="material-symbols-outlined">create_new_folder</span> add folder
+            </button>
+            <button class="btn btn-sm" onclick="moveFiles(-1)">
+              <span class="material-symbols-outlined">arrow_upward</span>
+            </button>
+            <button class="btn btn-sm" onclick="moveFiles(1)">
+              <span class="material-symbols-outlined">arrow_downward</span>
+            </button>
+            <button class="btn btn-sm" onclick="sortFiles()">
+              <span class="material-symbols-outlined">sort_by_alpha</span>
+            </button>
+            <button class="btn btn-sm" onclick="removeSelected()">
+              <span class="material-symbols-outlined">remove</span>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="clearFiles()">
+              <span class="material-symbols-outlined">delete_sweep</span>
+            </button>
+          </div>
+          <span class="file-count" id="fileCount">0 files</span>
+        </div>
+
+        <div class="file-list" id="fileList">
+          <div class="file-list-empty" id="fileListEmpty">
+            <span class="material-symbols-outlined">upload_file</span>
+            drop CBZ files here or use buttons above
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ METADATA TAB ═══════ -->
+  <div class="tab-panel" id="tab-metadata">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-4">badge</span>
+        book metadata
+      </div>
+      <div class="section-body">
+        <div class="form-grid">
+          <label>title</label>
+          <input type="text" id="metaTitle" placeholder="auto-filled from filename">
+          <label>author</label>
+          <input type="text" id="metaAuthor" value="Unknown">
+          <label>series</label>
+          <input type="text" id="metaSeries" placeholder="series name for grouping">
+          <span class="form-hint">groups volumes in Apple Books</span>
+          <label>series #</label>
+          <input type="text" id="metaSeriesIdx" placeholder="1">
+          <label>publisher</label>
+          <input type="text" id="metaPublisher">
+          <label>language</label>
+          <input type="text" id="metaLanguage" value="en" placeholder="en, ja, fr...">
+          <label>genre</label>
+          <input type="text" id="metaGenre" value="Comics & Graphic Novels">
+          <label>date</label>
+          <input type="text" id="metaDate" placeholder="YYYY-MM-DD">
+          <label>rights</label>
+          <input type="text" id="metaRights" placeholder="copyright info">
+          <label>description</label>
+          <textarea id="metaDescription" rows="3" placeholder="book description"></textarea>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <div class="form-grid">
+            <label>page direction</label>
+            <div class="check-group">
+              <label class="check-item">
+                <input type="radio" name="direction" value="ltr" checked>
+                <span class="radio-box"><span class="radio-dot"></span></span>
+                left-to-right
+              </label>
+              <label class="check-item">
+                <input type="radio" name="direction" value="rtl">
+                <span class="radio-box"><span class="radio-dot"></span></span>
+                right-to-left (manga)
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cover Art -->
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-3">image</span>
+        cover art
+      </div>
+      <div class="section-body">
+        <div class="cover-area">
+          <div class="cover-preview" id="coverPreview">
+            <span class="material-symbols-outlined">image</span>
+          </div>
+          <div class="cover-controls">
+            <span class="cover-name" id="coverName">no custom cover — uses first page</span>
+            <div class="btn-group">
+              <button class="btn" onclick="chooseCover()">
+                <span class="material-symbols-outlined">add_photo_alternate</span> choose cover
+              </button>
+              <button class="btn btn-danger" onclick="removeCover()">
+                <span class="material-symbols-outlined">close</span> remove
+              </button>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="coverInput" accept="image/*" style="display:none" onchange="handleCover(event)">
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ IMAGE TAB ═══════ -->
+  <div class="tab-panel" id="tab-image">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-6">auto_fix_high</span>
+        processing
+      </div>
+      <div class="section-body">
+        <div class="check-group">
+          <label class="check-item">
+            <input type="checkbox" id="noCrop">
+            <span class="check-box"><span class="material-symbols-outlined">check</span></span>
+            no cropping
+          </label>
+          <label class="check-item">
+            <input type="checkbox" id="grayscale">
+            <span class="check-box"><span class="material-symbols-outlined">check</span></span>
+            grayscale
+          </label>
+          <label class="check-item">
+            <input type="checkbox" id="sharpen">
+            <span class="check-box"><span class="material-symbols-outlined">check</span></span>
+            sharpen
+          </label>
+          <label class="check-item">
+            <input type="checkbox" id="splitWide">
+            <span class="check-box"><span class="material-symbols-outlined">check</span></span>
+            split wide pages
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-2">high_quality</span>
+        quality & sizing
+      </div>
+      <div class="section-body">
+        <div class="form-grid">
+          <label>jpeg quality</label>
+          <div class="range-row">
+            <input type="range" id="jpegQuality" min="10" max="100" value="85"
+                   oninput="document.getElementById('qualityVal').textContent=this.value">
+            <span class="range-value" id="qualityVal">85</span>
+          </div>
+
+          <label>max width</label>
+          <div class="form-row-inline">
+            <input type="number" id="maxWidth" value="0" min="0" style="width:100px">
+            <span style="font-size:10px;color:var(--text-muted)">px (0 = no limit)</span>
+          </div>
+
+          <label>max height</label>
+          <div class="form-row-inline">
+            <input type="number" id="maxHeight" value="0" min="0" style="width:100px">
+            <span style="font-size:10px;color:var(--text-muted)">px (0 = no limit)</span>
+          </div>
+
+          <label>wide threshold</label>
+          <div class="form-row-inline">
+            <input type="number" id="wideThreshold" value="1.3" step="0.1" min="0.5" style="width:80px">
+            <span style="font-size:10px;color:var(--text-muted)">w/h ratio for split</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-5">palette</span>
+        appearance
+      </div>
+      <div class="section-body">
+        <div class="form-grid">
+          <label>background</label>
+          <div class="color-picker-row">
+            <div class="color-swatch" id="bgSwatch" style="background:#000000"
+                 onclick="document.getElementById('bgColorPicker').click()"></div>
+            <input type="text" id="bgColor" value="#000000" style="width:100px"
+                   oninput="document.getElementById('bgSwatch').style.background=this.value">
+            <input type="color" id="bgColorPicker" value="#000000"
+                   onchange="document.getElementById('bgColor').value=this.value;document.getElementById('bgSwatch').style.background=this.value">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-3">speed</span>
+        performance
+      </div>
+      <div class="section-body">
+        <div class="form-grid">
+          <label>workers</label>
+          <div class="range-row">
+            <input type="range" id="workers" min="1" max="16" value="4"
+                   oninput="document.getElementById('workersVal').textContent=this.value">
+            <span class="range-value" id="workersVal">4</span>
+          </div>
+          <span class="form-hint">parallel image processing threads</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ OUTPUT TAB ═══════ -->
+  <div class="tab-panel" id="tab-output">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-4">conversion_path</span>
+        conversion mode
+      </div>
+      <div class="section-body">
+        <div class="check-group" style="flex-direction:column; gap:8px;">
+          <label class="check-item">
+            <input type="radio" name="mode" value="individual" checked>
+            <span class="radio-box"><span class="radio-dot"></span></span>
+            individual — each CBZ becomes a separate EPUB
+          </label>
+          <label class="check-item">
+            <input type="radio" name="mode" value="merged">
+            <span class="radio-box"><span class="radio-dot"></span></span>
+            merged — all CBZ files combined into one EPUB
+          </label>
+        </div>
+        <div class="form-hint" style="grid-column:1; margin-top:8px;">
+          in merged mode, file order from the files tab is preserved
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-6">save</span>
+        output directory
+      </div>
+      <div class="section-body">
+        <div class="form-row">
+          <input type="text" id="outputDir" placeholder="leave empty to save alongside source files" style="flex:1">
+          <button class="btn" onclick="browseOutput()">
+            <span class="material-symbols-outlined">folder</span> browse
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="material-symbols-outlined accent-2">check_circle</span>
+        apple books compatibility
+      </div>
+      <div class="section-body">
+        <div class="compat-list">
+          <div class="compat-item">
+            <span class="material-symbols-outlined">check</span>
+            fixed-layout EPUB 3.0
+          </div>
+          <div class="compat-item">
+            <span class="material-symbols-outlined">check</span>
+            series & collection metadata
+          </div>
+          <div class="compat-item">
+            <span class="material-symbols-outlined">check</span>
+            proper cover image
+          </div>
+          <div class="compat-item">
+            <span class="material-symbols-outlined">check</span>
+            right-to-left for manga
+          </div>
+          <div class="compat-item">
+            <span class="material-symbols-outlined">check</span>
+            per-page viewport sizing
+          </div>
+          <div class="compat-item">
+            <span class="material-symbols-outlined">check</span>
+            calibre series compat
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ CONVERT ═══════ -->
+  <div class="progress-area" id="progressArea" style="display:none;">
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-info">
+      <span id="progressStatus">preparing...</span>
+      <span id="progressEta"></span>
+    </div>
+    <div class="log" id="logArea"></div>
+  </div>
+
+  <div style="margin-top:16px; display:flex; gap:8px;">
+    <button class="btn btn-primary btn-convert" id="convertBtn" onclick="startConversion()">
+      <span class="material-symbols-outlined">bolt</span> convert
+    </button>
+    <button class="btn btn-danger btn-convert" id="cancelBtn" onclick="cancelConversion()" style="display:none; width:auto; flex:0 0 auto; padding:12px 24px;">
+      <span class="material-symbols-outlined">stop</span> cancel
+    </button>
+  </div>
+
+  <!-- ═══════ STATUS BAR ═══════ -->
+  <div class="status-bar">
+    <div class="status-bar-left">
+      <div class="status-dot ready" id="statusDot"></div>
+      <span id="statusText">ready</span>
+    </div>
+    <span>cbz2epub v2.0 // client-side</span>
+  </div>
+
+</div>
+
+<!-- Hidden file inputs -->
+<input type="file" id="fileInput" multiple accept=".cbz,.zip" style="display:none" onchange="handleFiles(event)">
+<input type="file" id="folderInput" webkitdirectory style="display:none" onchange="handleFolder(event)">
+
+<script>
+/* ══════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════ */
+const state = {
+  files: [],           // { file: File, name: string, path: string, status: '' }
+  selectedIndices: new Set(),
+  coverData: null,
+  coverName: '',
+  converting: false,
+  cancelled: false,
+  startTime: 0
+};
+
+/* ══════════════════════════════════════════
+   THEME
+   ══════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  document.getElementById('themeIcon').textContent = next === 'dark' ? 'dark_mode' : 'light_mode';
+  localStorage.setItem('theme', next);
+}
+
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeIcon').textContent = saved === 'dark' ? 'dark_mode' : 'light_mode';
+  }
+})();
+
+/* ══════════════════════════════════════════
+   TABS
+   ══════════════════════════════════════════ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+/* ══════════════════════════════════════════
+   FILE MANAGEMENT
+   ══════════════════════════════════════════ */
+function addFiles() {
+  document.getElementById('fileInput').click();
+}
+
+function addFolder() {
+  document.getElementById('folderInput').click();
+}
+
+function handleFiles(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(f => {
+    if (f.name.match(/\.(cbz|zip)$/i)) {
+      if (!state.files.find(x => x.name === f.name && x.file.size === f.size)) {
+        state.files.push({ file: f, name: f.name, path: f.webkitRelativePath || f.name, status: '' });
+      }
+    }
+  });
+  e.target.value = '';
+  renderFileList();
+}
+
+function handleFolder(e) {
+  const files = Array.from(e.target.files);
+  files
+    .filter(f => f.name.match(/\.(cbz|zip)$/i))
+    .sort((a, b) => naturalSort(a.name, b.name))
+    .forEach(f => {
+      if (!state.files.find(x => x.name === f.name && x.file.size === f.size)) {
+        state.files.push({ file: f, name: f.name, path: f.webkitRelativePath || f.name, status: '' });
+      }
+    });
+  e.target.value = '';
+  renderFileList();
+}
+
+function naturalSort(a, b) {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function sortFiles() {
+  state.files.sort((a, b) => naturalSort(a.name, b.name));
+  state.selectedIndices.clear();
+  renderFileList();
+}
+
+function removeSelected() {
+  state.files = state.files.filter((_, i) => !state.selectedIndices.has(i));
+  state.selectedIndices.clear();
+  renderFileList();
+}
+
+function clearFiles() {
+  state.files = [];
+  state.selectedIndices.clear();
+  renderFileList();
+}
+
+function moveFiles(dir) {
+  const indices = Array.from(state.selectedIndices).sort((a, b) => a - b);
+  if (!indices.length) return;
+
+  if (dir === -1) {
+    for (const i of indices) {
+      if (i === 0) return;
+      [state.files[i - 1], state.files[i]] = [state.files[i], state.files[i - 1]];
+    }
+    state.selectedIndices = new Set(indices.map(i => i - 1));
+  } else {
+    for (const i of indices.reverse()) {
+      if (i >= state.files.length - 1) return;
+      [state.files[i + 1], state.files[i]] = [state.files[i], state.files[i + 1]];
+    }
+    state.selectedIndices = new Set(indices.map(i => i + 1));
+  }
+  renderFileList();
+}
+
+function toggleSelect(idx, e) {
+  if (e.shiftKey && state.selectedIndices.size > 0) {
+    const last = Math.max(...state.selectedIndices);
+    const start = Math.min(last, idx);
+    const end = Math.max(last, idx);
+    for (let i = start; i <= end; i++) state.selectedIndices.add(i);
+  } else if (e.ctrlKey || e.metaKey) {
+    if (state.selectedIndices.has(idx)) state.selectedIndices.delete(idx);
+    else state.selectedIndices.add(idx);
+  } else {
+    state.selectedIndices = new Set([idx]);
+  }
+  renderFileList();
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  const empty = document.getElementById('fileListEmpty');
+  const count = document.getElementById('fileCount');
+
+  count.textContent = state.files.length + ' file' + (state.files.length !== 1 ? 's' : '');
+
+  if (!state.files.length) {
+    list.innerHTML = '';
+    list.appendChild(empty);
+    empty.style.display = 'flex';
+    return;
+  }
+
+  list.innerHTML = state.files.map((f, i) => {
+    const sel = state.selectedIndices.has(i) ? ' selected' : '';
+    const status = f.status ? ' ' + f.status : '';
+    const icon = f.status === 'success' ? 'check_circle' : f.status === 'error' ? 'error' : 'description';
+    const dir = f.path.includes('/') ? f.path.substring(0, f.path.lastIndexOf('/')) : '';
+    return `<div class="file-item${sel}${status}" onclick="toggleSelect(${i}, event)">
+      <span class="material-symbols-outlined">${icon}</span>
+      <span class="file-item-name">${f.name}</span>
+      ${dir ? `<span class="file-item-path">${dir}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════
+   DRAG & DROP
+   ══════════════════════════════════════════ */
+document.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  const items = e.dataTransfer.files;
+  Array.from(items).forEach(f => {
+    if (f.name.match(/\.(cbz|zip)$/i)) {
+      if (!state.files.find(x => x.name === f.name && x.file.size === f.size)) {
+        state.files.push({ file: f, name: f.name, path: f.name, status: '' });
+      }
+    }
+  });
+  renderFileList();
+});
+
+/* ══════════════════════════════════════════
+   COVER
+   ══════════════════════════════════════════ */
+function chooseCover() {
+  document.getElementById('coverInput').click();
+}
+
+function handleCover(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    state.coverData = ev.target.result;
+    state.coverName = file.name;
+    document.getElementById('coverName').textContent = file.name;
+    document.getElementById('coverPreview').innerHTML = `<img src="${ev.target.result}">`;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function removeCover() {
+  state.coverData = null;
+  state.coverName = '';
+  document.getElementById('coverName').textContent = 'no custom cover \u2014 uses first page';
+  document.getElementById('coverPreview').innerHTML = '<span class="material-symbols-outlined">image</span>';
+}
+
+/* ══════════════════════════════════════════
+   BROWSE OUTPUT (fallback: prompt)
+   ══════════════════════════════════════════ */
+function browseOutput() {
+  if ('showDirectoryPicker' in window) {
+    window.showDirectoryPicker().then(handle => {
+      document.getElementById('outputDir').value = handle.name;
+      state.outputDirHandle = handle;
+    }).catch(() => {});
+  } else {
+    const name = prompt('Enter output folder name:', 'epub_output');
+    if (name) document.getElementById('outputDir').value = name;
+  }
+}
+
+/* ══════════════════════════════════════════
+   UTILITY: READ CBZ
+   ══════════════════════════════════════════ */
+async function readCBZ(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const entries = [];
+
+  // Minimal ZIP reader
+  const view = new DataView(arrayBuffer);
+  let offset = arrayBuffer.byteLength - 22;
+
+  // Find End of Central Directory
+  while (offset >= 0) {
+    if (view.getUint32(offset, true) === 0x06054b50) break;
+    offset--;
+  }
+
+  if (offset < 0) throw new Error('Invalid ZIP');
+
+  const cdOffset = view.getUint32(offset + 16, true);
+  const cdEntries = view.getUint16(offset + 10, true);
+  let pos = cdOffset;
+
+  for (let i = 0; i < cdEntries; i++) {
+    if (view.getUint32(pos, true) !== 0x02014b50) break;
+
+    const compressionMethod = view.getUint16(pos + 10, true);
+    const compressedSize = view.getUint32(pos + 20, true);
+    const uncompressedSize = view.getUint32(pos + 24, true);
+    const nameLen = view.getUint16(pos + 28, true);
+    const extraLen = view.getUint16(pos + 30, true);
+    const commentLen = view.getUint16(pos + 32, true);
+    const localHeaderOffset = view.getUint32(pos + 42, true);
+    const nameBytes = new Uint8Array(arrayBuffer, pos + 46, nameLen);
+    const name = new TextDecoder().decode(nameBytes);
+
+    pos += 46 + nameLen + extraLen + commentLen;
+
+    const ext = name.split('.').pop().toLowerCase();
+    if (!['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif'].includes(ext)) continue;
+    if (name.startsWith('.') || name.includes('__MACOSX') || name.includes('.DS_Store')) continue;
+
+    // Read local header to find data offset
+    const localNameLen = view.getUint16(localHeaderOffset + 26, true);
+    const localExtraLen = view.getUint16(localHeaderOffset + 28, true);
+    const dataOffset = localHeaderOffset + 30 + localNameLen + localExtraLen;
+    const rawData = new Uint8Array(arrayBuffer, dataOffset, compressedSize);
+
+    let imageData;
+    if (compressionMethod === 0) {
+      imageData = rawData;
+    } else if (compressionMethod === 8) {
+      const ds = new DecompressionStream('deflate-raw');
+      const writer = ds.writable.getWriter();
+      const reader = ds.readable.getReader();
+      writer.write(rawData);
+      writer.close();
+      const chunks = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+      }
+      const totalLen = chunks.reduce((a, c) => a + c.length, 0);
+      imageData = new Uint8Array(totalLen);
+      let off = 0;
+      for (const chunk of chunks) {
+        imageData.set(chunk, off);
+        off += chunk.length;
+      }
+    } else {
+      continue;
+    }
+
+    entries.push({ name, data: imageData });
+  }
+
+  entries.sort((a, b) => naturalSort(a.name, b.name));
+  return entries;
+}
+
+/* ══════════════════════════════════════════
+   IMAGE PROCESSING (Canvas)
+   ══════════════════════════════════════════ */
+function loadImage(data) {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([data]);
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image')); };
+    img.src = url;
+  });
+}
+
+function processImage(img, settings) {
+  const results = [];
+  let sw = img.width, sh = img.height;
+
+  // Split wide pages
+  if (settings.splitWide && (sw / sh) > settings.wideThreshold) {
+    const direction = document.querySelector('input[name="direction"]:checked').value;
+    const half = Math.floor(sw / 2);
+    if (direction === 'rtl') {
+      results.push(cropCanvas(img, half, 0, sw - half, sh));
+      results.push(cropCanvas(img, 0, 0, half, sh));
+    } else {
+      results.push(cropCanvas(img, 0, 0, half, sh));
+      results.push(cropCanvas(img, half, 0, sw - half, sh));
+    }
+  } else {
+    const c = document.createElement('canvas');
+    c.width = sw; c.height = sh;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    results.push(c);
+  }
+
+  return results.map(canvas => {
+    let c = canvas;
+
+    // Auto-crop
+    if (!settings.noCrop) {
+      c = autoCrop(c);
+    }
+
+    // Grayscale
+    if (settings.grayscale) {
+      const ctx = c.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, c.width, c.height);
+      const d = imageData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const avg = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+        d[i] = d[i+1] = d[i+2] = avg;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Sharpen
+    if (settings.sharpen) {
+      c = sharpenCanvas(c);
+    }
+
+    // Resize
+    if (settings.maxWidth > 0 && c.width > settings.maxWidth) {
+      c = resizeCanvas(c, settings.maxWidth, Math.round(c.height * (settings.maxWidth / c.width)));
+    }
+    if (settings.maxHeight > 0 && c.height > settings.maxHeight) {
+      c = resizeCanvas(c, Math.round(c.width * (settings.maxHeight / c.height)), settings.maxHeight);
+    }
+
+    return c;
+  });
+}
+
+function cropCanvas(img, x, y, w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(img, x, y, w, h, 0, 0, w, h);
+  return c;
+}
+
+function resizeCanvas(src, w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(src, 0, 0, w, h);
+  return c;
+}
+
+function autoCrop(canvas) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const d = imageData.data;
+  const threshold = 15;
+
+  let top = 0, bottom = h - 1, left = 0, right = w - 1;
+
+  // Top
+  outer_top:
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (d[i] > threshold && d[i] < 245) { top = y; break outer_top; }
+      if (d[i+1] > threshold && d[i+1] < 245) { top = y; break outer_top; }
+      if (d[i+2] > threshold && d[i+2] < 245) { top = y; break outer_top; }
+    }
+  }
+
+  // Bottom
+  outer_bottom:
+  for (let y = h - 1; y >= top; y--) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (d[i] > threshold && d[i] < 245) { bottom = y; break outer_bottom; }
+      if (d[i+1] > threshold && d[i+1] < 245) { bottom = y; break outer_bottom; }
+      if (d[i+2] > threshold && d[i+2] < 245) { bottom = y; break outer_bottom; }
+    }
+  }
+
+  // Left
+  outer_left:
+  for (let x = 0; x < w; x++) {
+    for (let y = top; y <= bottom; y++) {
+      const i = (y * w + x) * 4;
+      if (d[i] > threshold && d[i] < 245) { left = x; break outer_left; }
+      if (d[i+1] > threshold && d[i+1] < 245) { left = x; break outer_left; }
+      if (d[i+2] > threshold && d[i+2] < 245) { left = x; break outer_left; }
+    }
+  }
+
+  // Right
+  outer_right:
+  for (let x = w - 1; x >= left; x--) {
+    for (let y = top; y <= bottom; y++) {
+      const i = (y * w + x) * 4;
+      if (d[i] > threshold && d[i] < 245) { right = x; break outer_right; }
+      if (d[i+1] > threshold && d[i+1] < 245) { right = x; break outer_right; }
+      if (d[i+2] > threshold && d[i+2] < 245) { right = x; break outer_right; }
+    }
+  }
+
+  const cw = right - left + 1;
+  const ch = bottom - top + 1;
+
+  if (cw < w * 0.4 || ch < h * 0.4) return canvas;
+
+  const pad = 2;
+  const fx = Math.max(0, left - pad);
+  const fy = Math.max(0, top - pad);
+  const fw = Math.min(w - fx, cw + pad * 2);
+  const fh = Math.min(h - fy, ch + pad * 2);
+
+  const out = document.createElement('canvas');
+  out.width = fw; out.height = fh;
+  out.getContext('2d').drawImage(canvas, fx, fy, fw, fh, 0, 0, fw, fh);
+  return out;
+}
+
+function sharpenCanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const src = ctx.getImageData(0, 0, w, h);
+  const dst = ctx.createImageData(w, h);
+  const sd = src.data, dd = dst.data;
+
+  // Unsharp mask kernel
+  const k = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      for (let c = 0; c < 3; c++) {
+        let val = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            val += sd[((y + ky) * w + (x + kx)) * 4 + c] * k[(ky + 1) * 3 + (kx + 1)];
+          }
+        }
+        dd[(y * w + x) * 4 + c] = Math.min(255, Math.max(0, val));
+      }
+      dd[(y * w + x) * 4 + 3] = 255;
+    }
+  }
+  ctx.putImageData(dst, 0, 0);
+  return canvas;
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise(resolve => {
+    canvas.toBlob(resolve, 'image/jpeg', quality / 100);
+  });
+}
+
+/* ══════════════════════════════════════════
+   EPUB BUILDER
+   ══════════════════════════════════════════ */
+class EPUBWriter {
+  constructor() {
+    this.files = {};
+  }
+
+  addFile(path, content, isText = false) {
+    if (typeof content === 'string') {
+      this.files[path] = new TextEncoder().encode(content);
+    } else {
+      this.files[path] = content instanceof Uint8Array ? content : new Uint8Array(content);
+    }
+  }
+
+  async build() {
+    // Build ZIP manually
+    const parts = [];
+    const centralDir = [];
+    let offset = 0;
+
+    const entries = Object.entries(this.files);
+
+    for (const [path, data] of entries) {
+      const nameBytes = new TextEncoder().encode(path);
+
+      // Local file header
+      const local = new ArrayBuffer(30 + nameBytes.length);
+      const lv = new DataView(local);
+      lv.setUint32(0, 0x04034b50, true); // sig
+      lv.setUint16(4, 20, true);         // version needed
+      lv.setUint16(6, 0, true);          // flags
+      lv.setUint16(8, 0, true);          // compression: stored
+      lv.setUint16(10, 0, true);         // mod time
+      lv.setUint16(12, 0, true);         // mod date
+      lv.setUint32(14, crc32(data), true);
+      lv.setUint32(18, data.length, true); // compressed
+      lv.setUint32(22, data.length, true); // uncompressed
+      lv.setUint16(26, nameBytes.length, true);
+      lv.setUint16(28, 0, true);          // extra len
+
+      const localArr = new Uint8Array(local);
+      localArr.set(nameBytes, 30);
+      parts.push(localArr);
+      parts.push(data);
+
+      // Central directory
+      const cd = new ArrayBuffer(46 + nameBytes.length);
+      const cv = new DataView(cd);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true);
+      cv.setUint16(6, 20, true);
+      cv.setUint16(8, 0, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint16(12, 0, true);
+      cv.setUint16(14, 0, true);
+      cv.setUint32(16, crc32(data), true);
+      cv.setUint32(20, data.length, true);
+      cv.setUint32(24, data.length, true);
+      cv.setUint16(28, nameBytes.length, true);
+      cv.setUint16(30, 0, true);
+      cv.setUint16(32, 0, true);
+      cv.setUint16(34, 0, true);
+      cv.setUint16(36, 0, true);
+      cv.setUint32(38, 0, true);
+      cv.setUint32(42, offset, true);
+
+      const cdArr = new Uint8Array(cd);
+      cdArr.set(nameBytes, 46);
+      centralDir.push(cdArr);
+
+      offset += 30 + nameBytes.length + data.length;
+    }
+
+    const cdOffset = offset;
+    let cdSize = 0;
+    for (const cd of centralDir) {
+      parts.push(cd);
+      cdSize += cd.length;
+    }
+
+    // End of central directory
+    const eocd = new ArrayBuffer(22);
+    const ev = new DataView(eocd);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(4, 0, true);
+    ev.setUint16(6, 0, true);
+    ev.setUint16(8, entries.length, true);
+    ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, cdSize, true);
+    ev.setUint32(16, cdOffset, true);
+    ev.setUint16(20, 0, true);
+    parts.push(new Uint8Array(eocd));
+
+    return new Blob(parts, { type: 'application/epub+zip' });
+  }
+}
+
+// CRC32 table
+const crc32Table = new Uint32Array(256);
+for (let i = 0; i < 256; i++) {
+  let c = i;
+  for (let j = 0; j < 8; j++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+  crc32Table[i] = c;
+}
+
+function crc32(data) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < data.length; i++) crc = crc32Table[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+function buildEPUB(metadata, pages, coverBlob, bgColor) {
+  const writer = new EPUBWriter();
+  const uid = generateUUID();
+
+  // mimetype (must be first, uncompressed)
+  writer.addFile('mimetype', 'application/epub+zip');
+
+  // META-INF/container.xml
+  writer.addFile('META-INF/container.xml',
+`<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`);
+
+  // Apple Books display options
+  writer.addFile('META-INF/com.apple.ibooks.display-options.xml',
+`<?xml version="1.0" encoding="UTF-8"?>
+<display_options>
+  <platform name="*">
+    <option name="fixed-layout">true</option>
+    <option name="open-to-spread">false</option>
+  </platform>
+</display_options>`);
+
+  // Add cover
+  if (coverBlob) {
+    writer.addFile('OEBPS/images/cover.jpg', coverBlob);
+  }
+
+  // Add page images
+  pages.forEach((p, i) => {
+    writer.addFile(`OEBPS/images/page_${String(i).padStart(5,'0')}.jpg`, p.data);
+  });
+
+  // Generate content.opf
+  const direction = metadata.direction || 'ltr';
+  let manifestItems = '';
+  let spineItems = '';
+
+  if (coverBlob) {
+    manifestItems += `    <item id="cover-image" href="images/cover.jpg" media-type="image/jpeg" properties="cover-image"/>\n`;
+  }
+
+  pages.forEach((p, i) => {
+    const id = `page_${String(i).padStart(5,'0')}`;
+    manifestItems += `    <item id="${id}" href="${id}.xhtml" media-type="application/xhtml+xml"/>\n`;
+    manifestItems += `    <item id="${id}_img" href="images/${id}.jpg" media-type="image/jpeg"/>\n`;
+    spineItems += `    <itemref idref="${id}"/>\n`;
+  });
+
+  let metaExtra = '';
+  if (metadata.series) {
+    metaExtra += `    <meta name="calibre:series" content="${escXml(metadata.series)}"/>\n`;
+    metaExtra += `    <meta property="belongs-to-collection">${escXml(metadata.series)}</meta>\n`;
+    if (metadata.seriesIndex) {
+      metaExtra += `    <meta name="calibre:series_index" content="${escXml(metadata.seriesIndex)}"/>\n`;
+    }
+  }
+
+  const opf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid" dir="${direction}">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:identifier id="uid">${uid}</dc:identifier>
+    <dc:title>${escXml(metadata.title)}</dc:title>
+    <dc:creator>${escXml(metadata.author)}</dc:creator>
+    <dc:language>${escXml(metadata.language)}</dc:language>
+    <dc:date>${escXml(metadata.date || new Date().toISOString().split('T')[0])}</dc:date>
+${metadata.publisher ? `    <dc:publisher>${escXml(metadata.publisher)}</dc:publisher>\n` : ''}${metadata.description ? `    <dc:description>${escXml(metadata.description)}</dc:description>\n` : ''}${metadata.genre ? `    <dc:subject>${escXml(metadata.genre)}</dc:subject>\n` : ''}${metadata.rights ? `    <dc:rights>${escXml(metadata.rights)}</dc:rights>\n` : ''}    <meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z/, 'Z')}</meta>
+    <meta property="rendition:layout">pre-paginated</meta>
+    <meta property="rendition:spread">none</meta>
+    <meta property="rendition:orientation">auto</meta>
+${metaExtra}  </metadata>
+  <manifest>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+${manifestItems}  </manifest>
+  <spine toc="ncx" page-progression-direction="${direction}">
+${spineItems}  </spine>
+</package>`;
+
+  writer.addFile('OEBPS/content.opf', opf);
+
+  // NCX
+  let ncxPoints = '';
+  pages.forEach((p, i) => {
+    const id = `page_${String(i).padStart(5,'0')}`;
+    const label = p.chapter || `Page ${i + 1}`;
+    ncxPoints += `    <navPoint id="np_${i}" playOrder="${i + 1}">
+      <navLabel><text>${escXml(label)}</text></navLabel>
+      <content src="${id}.xhtml"/>
+    </navPoint>\n`;
+  });
+
+  writer.addFile('OEBPS/toc.ncx',
+`<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head><meta name="dtb:uid" content="${uid}"/></head>
+  <docTitle><text>${escXml(metadata.title)}</text></docTitle>
+  <navMap>
+${ncxPoints}  </navMap>
+</ncx>`);
+
+  // Nav
+  let navItems = '';
+  pages.forEach((p, i) => {
+    const id = `page_${String(i).padStart(5,'0')}`;
+    if (p.chapter) {
+      navItems += `      <li><a href="${id}.xhtml">${escXml(p.chapter)}</a></li>\n`;
+    }
+  });
+  if (!navItems) {
+    navItems = `      <li><a href="page_00000.xhtml">Start</a></li>\n`;
+  }
+
+  writer.addFile('OEBPS/nav.xhtml',
+`<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head><title>Navigation</title></head>
+<body>
+  <nav epub:type="toc">
+    <ol>
+${navItems}    </ol>
+  </nav>
+</body>
+</html>`);
+
+  // Page XHTML files
+  pages.forEach((p, i) => {
+    const id = `page_${String(i).padStart(5,'0')}`;
+    writer.addFile(`OEBPS/${id}.xhtml`,
+`<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=${p.width}, height=${p.height}"/>
+  <title>Page ${i + 1}</title>
+  <style>*{margin:0;padding:0}body{background:${bgColor};width:${p.width}px;height:${p.height}px;overflow:hidden}img{width:${p.width}px;height:${p.height}px;display:block}</style>
+</head>
+<body><img src="images/${id}.jpg" alt="Page ${i + 1}"/></body>
+</html>`);
+  });
+
+  return writer.build();
+}
+
+function escXml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════
+   CONVERSION ENGINE
+   ══════════════════════════════════════════ */
+function getSettings() {
+  return {
+    noCrop: document.getElementById('noCrop').checked,
+    grayscale: document.getElementById('grayscale').checked,
+    sharpen: document.getElementById('sharpen').checked,
+    splitWide: document.getElementById('splitWide').checked,
+    jpegQuality: parseInt(document.getElementById('jpegQuality').value),
+    maxWidth: parseInt(document.getElementById('maxWidth').value) || 0,
+    maxHeight: parseInt(document.getElementById('maxHeight').value) || 0,
+    wideThreshold: parseFloat(document.getElementById('wideThreshold').value) || 1.3,
+    workers: parseInt(document.getElementById('workers').value) || 4,
+    bgColor: document.getElementById('bgColor').value || '#000000'
+  };
+}
+
+function getMetadata() {
+  return {
+    title: document.getElementById('metaTitle').value.trim() || 'Untitled',
+    author: document.getElementById('metaAuthor').value.trim() || 'Unknown',
+    series: document.getElementById('metaSeries').value.trim(),
+    seriesIndex: document.getElementById('metaSeriesIdx').value.trim(),
+    publisher: document.getElementById('metaPublisher').value.trim(),
+    language: document.getElementById('metaLanguage').value.trim() || 'en',
+    genre: document.getElementById('metaGenre').value.trim(),
+    date: document.getElementById('metaDate').value.trim(),
+    rights: document.getElementById('metaRights').value.trim(),
+    description: document.getElementById('metaDescription').value.trim(),
+    direction: document.querySelector('input[name="direction"]:checked').value
+  };
+}
+
+function getMode() {
+  return document.querySelector('input[name="mode"]:checked').value;
+}
+
+function setStatus(text, type = '') {
+  document.getElementById('statusText').textContent = text;
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + (type || 'ready');
+}
+
+function setProgress(pct, status, eta) {
+  const fill = document.getElementById('progressFill');
+  fill.style.width = pct + '%';
+  fill.className = 'progress-bar-fill' + (pct >= 100 ? ' success' : '');
+  document.getElementById('progressStatus').textContent = status || '';
+  document.getElementById('progressEta').textContent = eta || '';
+}
+
+function addLog(msg, type = '') {
+  const log = document.getElementById('logArea');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry ' + type;
+  entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function getCoverData() {
+  if (!state.coverData) return null;
+  if (state.coverData instanceof Uint8Array) return state.coverData;
+  // Convert dataURL to Uint8Array
+  const resp = await fetch(state.coverData);
+  const blob = await resp.blob();
+  // Re-encode as JPEG
+  const img = await createImageBitmap(blob);
+  const c = document.createElement('canvas');
+  c.width = img.width; c.height = img.height;
+  c.getContext('2d').drawImage(img, 0, 0);
+  const jpegBlob = await canvasToBlob(c, 92);
+  const ab = await jpegBlob.arrayBuffer();
+  return new Uint8Array(ab);
+}
+
+async function processFileImages(file, settings, progressCb) {
+  const entries = await readCBZ(file);
+  const pages = [];
+  const total = entries.length;
+
+  // Process with concurrency limit
+  const workers = settings.workers;
+  let completed = 0;
+  const queue = entries.map((entry, idx) => ({ entry, idx }));
+  const results = new Array(total);
+
+  async function worker() {
+    while (queue.length > 0 && !state.cancelled) {
+      const item = queue.shift();
+      if (!item) break;
+
+      try {
+        const img = await loadImage(item.entry.data);
+        const canvases = processImage(img, settings);
+
+        const subPages = [];
+        for (const canvas of canvases) {
+          const blob = await canvasToBlob(canvas, settings.jpegQuality);
+          const ab = await blob.arrayBuffer();
+          subPages.push({
+            data: new Uint8Array(ab),
+            width: canvas.width,
+            height: canvas.height
+          });
+        }
+        results[item.idx] = subPages;
+      } catch (e) {
+        results[item.idx] = [];
+      }
+
+      completed++;
+      if (progressCb) progressCb(completed, total);
+    }
+  }
+
+  const workerPromises = [];
+  for (let i = 0; i < Math.min(workers, total); i++) {
+    workerPromises.push(worker());
+  }
+  await Promise.all(workerPromises);
+
+  for (const subPages of results) {
+    if (subPages) pages.push(...subPages);
+  }
+
+  return pages;
+}
+
+async function startConversion() {
+  if (state.converting) return;
+  if (!state.files.length) {
+    alert('Add CBZ files first.');
+    return;
+  }
+
+  state.converting = true;
+  state.cancelled = false;
+  state.startTime = performance.now();
+
+  document.getElementById('convertBtn').disabled = true;
+  document.getElementById('cancelBtn').style.display = '';
+  document.getElementById('progressArea').style.display = '';
+  document.getElementById('logArea').innerHTML = '';
+
+  const settings = getSettings();
+  const metadata = getMetadata();
+  const mode = getMode();
+  const coverData = await getCoverData();
+
+  setStatus('converting...', 'working');
+  setProgress(0, 'starting...', '');
+  addLog('conversion started', 'info');
+  addLog(`mode: ${mode} | files: ${state.files.length} | quality: ${settings.jpegQuality}`, 'info');
+
+  let success = 0;
+  let errors = 0;
+
+  try {
+    if (mode === 'merged') {
+      // Merged mode
+      const allPages = [];
+      const total = state.files.length;
+
+      for (let fi = 0; fi < total; fi++) {
+        if (state.cancelled) break;
+
+        const f = state.files[fi];
+        const fname = f.name.replace(/\.(cbz|zip)$/i, '');
+        addLog(`reading ${f.name}...`);
+
+        try {
+          const pages = await processFileImages(f.file, settings, (cur, tot) => {
+            const filePct = cur / tot;
+            const overall = ((fi + filePct) / total) * 100;
+            const elapsed = (performance.now() - state.startTime) / 1000;
+            const done = fi + filePct;
+            const eta = done > 0 ? ((elapsed / done) * (total - done)).toFixed(0) + 's' : '';
+            setProgress(overall, `[${fi+1}/${total}] ${fname}: ${cur}/${tot} images`, eta);
+          });
+
+          // Mark first page of each file as chapter
+          if (pages.length > 0) {
+            pages[0].chapter = fname;
+          }
+          allPages.push(...pages);
+          f.status = 'success';
+          addLog(`  ${f.name}: ${pages.length} pages`, 'success');
+        } catch (e) {
+          f.status = 'error';
+          errors++;
+          addLog(`  ${f.name}: ${e.message}`, 'error');
+        }
+        renderFileList();
+      }
+
+      if (!state.cancelled && allPages.length > 0) {
+        setProgress(95, 'building epub...', '');
+        addLog('building epub...', 'info');
+
+        const title = metadata.title !== 'Untitled' ? metadata.title : 'Merged_Comic';
+        const coverImg = coverData || (allPages.length > 0 ? allPages[0].data : null);
+        const blob = await buildEPUB(metadata, allPages, coverImg, settings.bgColor);
+
+        const safeTitle = title.replace(/[<>:"/\\|?*]/g, '_');
+        download(blob, safeTitle + '.epub');
+        success = state.files.filter(f => f.status === 'success').length;
+        addLog(`saved: ${safeTitle}.epub (${(blob.size / 1024 / 1024).toFixed(1)} MB)`, 'success');
+      }
+
+    } else {
+      // Individual mode
+      const total = state.files.length;
+
+      for (let fi = 0; fi < total; fi++) {
+        if (state.cancelled) break;
+
+        const f = state.files[fi];
+        const fname = f.name.replace(/\.(cbz|zip)$/i, '');
+        addLog(`converting ${f.name}...`);
+
+        try {
+          const pages = await processFileImages(f.file, settings, (cur, tot) => {
+            const filePct = cur / tot;
+            const overall = ((fi + filePct) / total) * 100;
+            const elapsed = (performance.now() - state.startTime) / 1000;
+            const done = fi + filePct;
+            const eta = done > 0 ? ((elapsed / done) * (total - done)).toFixed(0) + 's' : '';
+            setProgress(overall, `[${fi+1}/${total}] ${fname}: ${cur}/${tot} images`, eta);
+          });
+
+          if (pages.length > 0) {
+            pages[0].chapter = fname;
+          }
+
+          setProgress(((fi + 0.9) / total) * 100, `[${fi+1}/${total}] building epub...`, '');
+
+          const fileMeta = { ...metadata };
+          if (fileMeta.title === 'Untitled') fileMeta.title = fname;
+
+          const coverImg = coverData || (pages.length > 0 ? pages[0].data : null);
+          const blob = await buildEPUB(fileMeta, pages, coverImg, settings.bgColor);
+
+          const safeTitle = fname.replace(/[<>:"/\\|?*]/g, '_');
+          download(blob, safeTitle + '.epub');
+
+          f.status = 'success';
+          success++;
+          addLog(`  ${safeTitle}.epub (${(blob.size / 1024 / 1024).toFixed(1)} MB)`, 'success');
+        } catch (e) {
+          f.status = 'error';
+          errors++;
+          addLog(`  ${f.name}: ${e.message}`, 'error');
+        }
+        renderFileList();
+      }
+    }
+
+  } catch (e) {
+    addLog(`fatal error: ${e.message}`, 'error');
+    errors++;
+  }
+
+  const elapsed = ((performance.now() - state.startTime) / 1000).toFixed(1);
+
+  if (state.cancelled) {
+    setProgress(0, 'cancelled', '');
+    setStatus('cancelled', 'error');
+    addLog('conversion cancelled', 'error');
+    document.getElementById('progressFill').className = 'progress-bar-fill error';
+  } else {
+    setProgress(100, `done: ${success} converted, ${errors} errors`, `${elapsed}s`);
+    setStatus(`done: ${success}/${state.files.length} in ${elapsed}s`, errors > 0 ? 'error' : 'done');
+    addLog(`completed in ${elapsed}s — ${success} success, ${errors} errors`, success > 0 ? 'success' : 'error');
+  }
+
+  state.converting = false;
+  document.getElementById('convertBtn').disabled = false;
+  document.getElementById('cancelBtn').style.display = 'none';
+}
+
+function cancelConversion() {
+  state.cancelled = true;
+  setStatus('cancelling...', 'working');
+}
+
+/* ══════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════ */
+renderFileList();
+</script>
+</body>
+</html>
